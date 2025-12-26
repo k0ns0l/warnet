@@ -141,11 +141,11 @@ LOGGING_HELM_COMMANDS = [
     "helm repo add grafana https://grafana.github.io/helm-charts",
     "helm repo add prometheus-community https://prometheus-community.github.io/helm-charts",
     "helm repo update",
-    f"helm upgrade --install --namespace warnet-logging --create-namespace --values {MANIFESTS_DIR}/loki_values.yaml loki grafana/loki --version 5.47.2",
+    f"helm upgrade --install --namespace warnet-logging --create-namespace --values '{MANIFESTS_DIR}/loki_values.yaml' loki grafana/loki --version 5.47.2",
     "helm upgrade --install --namespace warnet-logging promtail grafana/promtail --create-namespace",
     "helm upgrade --install --namespace warnet-logging prometheus prometheus-community/kube-prometheus-stack --namespace warnet-logging --create-namespace --set grafana.enabled=false --set prometheus.prometheusSpec.maximumStartupDurationSeconds=300",
-    f"helm upgrade --install grafana-dashboards {CHARTS_DIR}/grafana-dashboards --namespace warnet-logging --create-namespace",
-    f"helm upgrade --install --namespace warnet-logging --create-namespace loki-grafana grafana/grafana --values {MANIFESTS_DIR}/grafana_values.yaml",
+    f"helm upgrade --install grafana-dashboards '{CHARTS_DIR}/grafana-dashboards' --namespace warnet-logging --create-namespace",
+    f"helm upgrade --install --namespace warnet-logging --create-namespace loki-grafana grafana/grafana --values '{MANIFESTS_DIR}/grafana_values.yaml'",
 ]
 
 

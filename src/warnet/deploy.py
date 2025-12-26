@@ -167,7 +167,7 @@ def run_plugins(directory, hook_value: HookValue, namespace, annex: Optional[dic
                 }
 
                 cmd = (
-                    f"{sys.executable} {network_file_path.parent / entrypoint_path / Path('plugin.py')} entrypoint "
+                    f"{sys.executable} '{network_file_path.parent / entrypoint_path / Path('plugin.py')}' entrypoint "
                     f"'{json.dumps(plugin_content)}' '{json.dumps(warnet_content)}'"
                 )
                 print(
@@ -290,8 +290,11 @@ def deploy_caddy(directory: Path, debug: bool):
 
     click.echo(f"Adding services to dashboard: {json.dumps(services, indent=2)}")
 
+    # Cleanup potential conflicting ingress in default namespace
+    run_command("kubectl delete ingress caddy-ingress -n default --ignore-not-found")
+
     cmd = (
-        f"{HELM_COMMAND} {name} {CADDY_CHART} "
+        f"{HELM_COMMAND} {name} '{CADDY_CHART}' "
         f"--namespace {namespace} --create-namespace "
         f"--set-json services='{json.dumps(services)}'"
     )
@@ -337,7 +340,7 @@ def deploy_fork_observer(directory: Path, debug: bool) -> bool:
 
     default_namespace = get_default_namespace()
     namespace = LOGGING_NAMESPACE
-    cmd = f"{HELM_COMMAND} 'fork-observer' {FORK_OBSERVER_CHART} --namespace {namespace} --create-namespace"
+    cmd = f"{HELM_COMMAND} 'fork-observer' '{FORK_OBSERVER_CHART}' --namespace {namespace} --create-namespace"
     if debug:
         cmd += " --debug"
 
@@ -378,7 +381,7 @@ rpc_password = "{FORK_OBSERVER_RPC_PASSWORD}"
         temp_file.write(yaml_string)
         temp_override_file_path = Path(temp_file.name)
 
-    cmd = f"{cmd} -f {temp_override_file_path}"
+    cmd = f"{cmd} -f '{temp_override_file_path}'"
 
     if not stream_command(cmd):
         click.echo(f"Failed to run Helm command: {cmd}")
@@ -441,7 +444,7 @@ def deploy_single_node(node, directory: Path, debug: bool, namespace: str):
         node_config_override = {k: v for k, v in node.items() if k != "name"}
 
         defaults_file_path = directory / DEFAULTS_FILE
-        cmd = f"{HELM_COMMAND} {node_name} {BITCOIN_CHART_LOCATION} --namespace {namespace} -f {defaults_file_path}"
+        cmd = f"{HELM_COMMAND} {node_name} '{BITCOIN_CHART_LOCATION}' --namespace {namespace} -f '{defaults_file_path}'"
         if debug:
             cmd += " --debug"
 
@@ -449,7 +452,7 @@ def deploy_single_node(node, directory: Path, debug: bool, namespace: str):
             with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as temp_file:
                 yaml.dump(node_config_override, temp_file)
                 temp_override_file_path = Path(temp_file.name)
-            cmd = f"{cmd} -f {temp_override_file_path}"
+            cmd = f"{cmd} -f '{temp_override_file_path}'"
 
         run_plugins(
             directory, HookValue.PRE_NODE, namespace, annex={AnnexMember.NODE_NAME.value: node_name}
@@ -507,13 +510,13 @@ def deploy_single_namespace(namespace, defaults_file_path: Path):
         namespace_name = namespace.get("name")
         namespace_config_override = {k: v for k, v in namespace.items() if k != "name"}
 
-        cmd = f"{HELM_COMMAND} {namespace_name} {NAMESPACES_CHART_LOCATION} -f {defaults_file_path}"
+        cmd = f"{HELM_COMMAND} {namespace_name} '{NAMESPACES_CHART_LOCATION}' -f '{defaults_file_path}'"
 
         if namespace_config_override:
             with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as temp_file:
                 yaml.dump(namespace_config_override, temp_file)
                 temp_override_file_path = Path(temp_file.name)
-            cmd = f"{cmd} -f {temp_override_file_path}"
+            cmd = f"{cmd} -f '{temp_override_file_path}'"
 
         if not stream_command(cmd):
             click.echo(f"Failed to run Helm command: {cmd}")
